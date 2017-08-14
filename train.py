@@ -11,10 +11,10 @@ RENDER = True
 RECORD = True
 HIDEEN_SIZE = 600
 POPULATION_SIZE = 100
-NET_INIT_SD = 0.1
+NET_INIT_SD = 0.05
 NET_TRIAL_SD = 0.01
 
-np.random.seed(1234)
+np.random.seed(4567)
 
 env = gym.make('Humanoid-v1')
 if RECORD:
@@ -27,10 +27,18 @@ if ACTION_SCALE != -env.action_space.low[0]:
 obs_dim = env.observation_space.shape[0]
 action_dim = env.action_space.shape[0]
 
-W1 = np.random.normal(0, NET_INIT_SD, [obs_dim, HIDEEN_SIZE])
-b1 = np.random.normal(0, NET_INIT_SD, HIDEEN_SIZE)
-W2 = np.random.normal(0, NET_INIT_SD, [HIDEEN_SIZE, action_dim])
-b2 = np.random.normal(0, NET_INIT_SD, action_dim)
+if os.path.isfile(OUTPUT_DIR + "W1.npy") and os.path.isfile(OUTPUT_DIR + "b1.npy") and os.path.isfile(OUTPUT_DIR + "W2.npy") and os.path.isfile(OUTPUT_DIR + "b2.npy"):
+	print "continue training"
+	W1 = np.load(OUTPUT_DIR + "W1.npy")
+	b1 = np.load(OUTPUT_DIR + "b1.npy")
+	W2 = np.load(OUTPUT_DIR + "W2.npy")
+	b2 = np.load(OUTPUT_DIR + "b2.npy")
+else:
+	print "initialize weight"
+	W1 = np.random.normal(0, NET_INIT_SD, [obs_dim, HIDEEN_SIZE])
+	b1 = np.random.normal(0, NET_INIT_SD, HIDEEN_SIZE)
+	W2 = np.random.normal(0, NET_INIT_SD, [HIDEEN_SIZE, action_dim])
+	b2 = np.random.normal(0, NET_INIT_SD, action_dim)
 
 generation = -1
 while True:
@@ -62,6 +70,7 @@ while True:
 				break
 				
 	print "generation: ", generation, " max total reward: ", np.amax(reward_array)
+	reward_array = np.power(reward_array, 3)
 	reward_array /= np.sum(np.absolute(reward_array))
 	for p in range(POPULATION_SIZE):
 		W1 += W1_trial[p] * reward_array[p]
